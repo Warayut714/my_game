@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tower Defense - Advanced Kingdom Guard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col items-center justify-center p-4 transition-colors duration-300">
+
+  <main class="w-full max-w-4xl bg-gray-800 rounded-2xl shadow-2xl p-6 space-y-4 border border-gray-700">
+    
+    <!-- Top Header -->
+    <header class="flex justify-between items-center border-b pb-3 border-gray-700">
+      <div>
+        <h1 class="text-2xl font-bold text-amber-500">🏰 Tower Defense: Kingdom Guard Pro</h1>
+        <p class="text-xs text-gray-400">เพิ่มป้อมสไนเปอร์ | บอสโกเลม | ระบบลูกศร | ระบบออโต้เวฟ</p>
+      </div>
+      <div class="flex gap-2">
+        <button id="howToPlayBtn" type="button" class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-semibold transition">
+          ❓ วิธีเล่น
+        </button>
+      </div>
+    </header>
+
+    <!-- Modal วิธีเล่น -->
+    <section id="howToPlayModal" class="hidden bg-amber-950/50 p-4 rounded-xl border border-amber-800/60 space-y-2 text-sm text-gray-200">
+      <h2 class="text-base font-bold text-amber-400">📜 กติกาและวิธีเล่น</h2>
+      <ul class="list-disc list-inside space-y-1">
+        <li><strong>ป้อมธนู 🏹 ($50):</strong> ยิงเร็ว แพ้ทางศัตรูเกราะหนัก</li>
+        <li><strong>ป้อมปืนใหญ่ 💣 ($90):</strong> ดาเมจวงกว้างและแรง ทำลายเกราะดี</li>
+        <li><strong>ป้อมน้ำแข็ง ❄ ($70):</strong> ยิงชะลอความเร็วศัตรูสายสปีด</li>
+        <li><strong>ป้อมเวทมนตร์ 🔮 ($120):</strong> ยิงเวทเจาะเกราะ 100%</li>
+        <li><strong>ป้อมสไนเปอร์ 🎯 ($150):</strong> ยิงไกลมาก ดาเมจรุนแรง แต่ยิงช้า (เหมาะยิงบอส)</li>
+        <li><strong>ศัตรูใหม่: บอสโกเลมหิน 🪨</strong> เลือดมหาศาล โผล่มาในบาง Wave</li>
+        <li><strong>ออโต้ Wave 🔄:</strong> เปิดเพื่อให้เกมรัน Wave ถัดไปอัตโนมัติ</li>
+      </ul>
+    </section>
+
+    <!-- Game Control Bar & Stats -->
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 bg-gray-900/80 p-3 rounded-xl border border-gray-700 text-center text-sm font-semibold">
+      <div class="bg-gray-800 p-2 rounded-lg border border-gray-700">
+        <span class="text-xs text-gray-400 block">❤️ พลังชีวิตปราสาท</span>
+        <span id="hpText" class="text-emerald-400 font-bold text-base">20 / 20</span>
+      </div>
+      <div class="bg-gray-800 p-2 rounded-lg border border-gray-700">
+        <span class="text-xs text-gray-400 block">💰 เหรียญทอง</span>
+        <span id="goldText" class="text-amber-400 font-bold text-base">200</span>
+      </div>
+      <div class="bg-gray-800 p-2 rounded-lg border border-gray-700">
+        <span class="text-xs text-gray-400 block">🌊 Wave ปัจจุบัน</span>
+        <span id="waveText" class="text-blue-400 font-bold text-base">1</span>
+      </div>
+      <div class="bg-gray-800 p-2 rounded-lg border border-gray-700 col-span-2 sm:col-span-2 flex items-center justify-around">
+        <div>
+          <span class="text-xs text-gray-400 block">ระดับความยาก</span>
+          <select id="levelSelect" class="bg-gray-700 text-xs p-1 rounded border border-gray-600 outline-none">
+            <option value="easy">Easy (เริ่มต้น 200 ทอง)</option>
+            <option value="hard">Hard (ศัตรูอึดขึ้น)</option>
+          </select>
+        </div>
+        <button id="restartBtn" type="button" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-xs text-white font-bold rounded shadow transition">
+          🔄 เริ่มใหม่
+        </button>
+      </div>
+    </div>
+
+    <!-- Status Notice -->
+    <section aria-live="polite" id="statusBox" class="p-2.5 rounded-lg text-center font-semibold bg-gray-700/50 text-amber-300 border border-gray-600 text-sm">
+      เลือกป้อมแล้ววางบนพื้นที่ว่าง! ลูกศรสีขาวบนป้อมจะชี้ไปที่ศัตรู
+    </section>
+
+    <!-- Tower Selector Buttons & Sell Control -->
+    <div class="flex flex-wrap items-center justify-between gap-2 bg-gray-900/60 p-3 rounded-xl border border-gray-700">
+      <div class="flex flex-wrap items-center gap-1.5">
+        <span class="text-xs font-bold text-gray-300 mr-1">สร้างป้อม:</span>
+        <button id="selectArcherBtn" type="button" class="tower-btn px-2 py-1.5 bg-amber-600 hover:bg-amber-500 rounded-lg text-xs font-bold transition border-2 border-amber-300">
+          🏹 ธนู ($50)
+        </button>
+        <button id="selectCannonBtn" type="button" class="tower-btn px-2 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs font-bold transition border-2 border-transparent">
+          💣 ปืนใหญ่ ($90)
+        </button>
+        <button id="selectIceBtn" type="button" class="tower-btn px-2 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs font-bold transition border-2 border-transparent">
+          ❄️ น้ำแข็ง ($70)
+        </button>
+        <button id="selectMageBtn" type="button" class="tower-btn px-2 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs font-bold transition border-2 border-transparent">
+          🔮 เวท ($120)
+        </button>
+        <button id="selectSniperBtn" type="button" class="tower-btn px-2 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs font-bold transition border-2 border-transparent text-emerald-400">
+          🎯 สไนเปอร์ ($150)
+        </button>
+      </div>
+
+      <!-- Action Area -->
+      <div class="flex items-center gap-2 mt-2 sm:mt-0">
+        <!-- ระบบ Auto Wave -->
+        <label class="flex items-center gap-1.5 text-xs font-bold text-gray-300 bg-gray-700 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-gray-600 transition border border-gray-600">
+          <input type="checkbox" id="autoWaveToggle" class="w-4 h-4 accent-emerald-500 cursor-pointer">
+          ออโต้ Wave
+        </label>
+
+        <button id="sellTowerBtn" type="button" disabled class="px-3 py-1.5 bg-red-600 hover:bg-red-500 disabled:bg-gray-700 text-white font-bold text-xs rounded-lg shadow transition disabled:opacity-50 disabled:cursor-not-allowed">
+          🗑️ ขาย (<span id="sellRefundText">$0</span>)
+        </button>
+        <button id="startWaveBtn" type="button" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg shadow-lg transition">
+          ⚔️ เริ่ม Wave (Space)
+        </button>
+      </div>
+    </div>
+
+    <!-- Canvas Game Map -->
+    <div class="relative w-full flex justify-center bg-gray-900 rounded-xl p-1 border-2 border-gray-700 overflow-hidden">
+      <canvas id="gameCanvas" width="700" height="350" class="w-full max-w-[700px] bg-gray-950 cursor-pointer rounded-lg"></canvas>
+    </div>
+
+  </main>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const images = {
+      archer: new Image(), cannon: new Image(), ice: new Image(), mage: new Image(), sniper: new Image(),
+      goblin: new Image(), armored: new Image(), runner: new Image(), golem: new Image()
+    };
+
+    // ป้อมต่างๆ
+    images.archer.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="%23f59e0b" stroke="%23ffffff" stroke-width="4"/><polygon points="40,20 85,50 40,80" fill="%2378350f"/><polygon points="85,40 100,50 85,60" fill="%23ffffff"/></svg>';
+    images.cannon.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="%23ef4444" stroke="%23ffffff" stroke-width="4"/><rect x="40" y="35" width="50" height="30" rx="5" fill="%231f2937"/><circle cx="50" cy="50" r="18" fill="%23111827"/><polygon points="90,40 100,50 90,60" fill="%23ffffff"/></svg>';
+    images.ice.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="%230284c7" stroke="%23bae6fd" stroke-width="4"/><polygon points="50,15 80,32 80,68 50,85 20,68 20,32" fill="%2338bdf8" stroke="%23ffffff" stroke-width="3"/><polygon points="85,40 100,50 85,60" fill="%23ffffff"/></svg>';
+    images.mage.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="%238b5cf6" stroke="%23f5d0fe" stroke-width="4"/><circle cx="50" cy="50" r="22" fill="%23a855f7"/><polygon points="50,10 85,50 50,90 15,50" fill="%23f0abfc" opacity="0.7"/><polygon points="85,40 100,50 85,60" fill="%23ffffff"/></svg>';
+    images.sniper.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="40" cy="50" r="35" fill="%2310b981" stroke="%23059669" stroke-width="4"/><rect x="40" y="45" width="50" height="10" fill="%23047857"/><polygon points="90,40 100,50 90,60" fill="%23ffffff"/></svg>';
+
+    // ศัตรู
+    images.goblin.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="%2322c55e"/><circle cx="35" cy="40" r="6" fill="%23fff"/><circle cx="65" cy="40" r="6" fill="%23fff"/><circle cx="35" cy="40" r="3" fill="%23000"/><circle cx="65" cy="40" r="3" fill="%23000"/></svg>';
+    images.armored.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="15" y="15" width="70" height="70" rx="15" fill="%2364748b" stroke="%23f8fafc" stroke-width="6"/><circle cx="35" cy="40" r="5" fill="%23ef4444"/><circle cx="65" cy="40" r="5" fill="%23ef4444"/><rect x="30" y="60" width="40" height="8" rx="2" fill="%23334155"/></svg>';
+    images.runner.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="50,10 90,85 10,85" fill="%23eab308"/><circle cx="50" cy="50" r="8" fill="%23000"/></svg>';
+    images.golem.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="20" fill="%234b5563" stroke="%231f2937" stroke-width="8"/><circle cx="30" cy="35" r="8" fill="%23f59e0b"/><circle cx="70" cy="35" r="8" fill="%23f59e0b"/><rect x="30" y="65" width="40" height="10" rx="3" fill="%231f2937"/></svg>';
+
+    let gold = 200;
+    let hp = 20;
+    let wave = 1;
+    let isWaveActive = false;
+    let selectedTowerType = 'archer';
+    let selectedTowerToSell = null;
+    let isGameOver = false;
+
+    const path = [
+      { x: 0, y: 175 }, { x: 150, y: 175 }, { x: 150, y: 60 }, { x: 350, y: 60 },
+      { x: 350, y: 280 }, { x: 550, y: 280 }, { x: 550, y: 175 }, { x: 700, y: 175 }
+    ];
+
+    let towers = [];
+    let enemies = [];
+    let projectiles = [];
+    let enemySpawnTimer = 0;
+    let enemiesToSpawn = [];
+
+    const hpText = document.getElementById('hpText');
+    const goldText = document.getElementById('goldText');
+    const waveText = document.getElementById('waveText');
+    const statusBox = document.getElementById('statusBox');
+    const startWaveBtn = document.getElementById('startWaveBtn');
+    const sellTowerBtn = document.getElementById('sellTowerBtn');
+    const sellRefundText = document.getElementById('sellRefundText');
+    const levelSelect = document.getElementById('levelSelect');
+    const restartBtn = document.getElementById('restartBtn');
+    const autoWaveToggle = document.getElementById('autoWaveToggle');
+
+    const towerBtns = {
+      archer: document.getElementById('selectArcherBtn'),
+      cannon: document.getElementById('selectCannonBtn'),
+      ice: document.getElementById('selectIceBtn'),
+      mage: document.getElementById('selectMageBtn'),
+      sniper: document.getElementById('selectSniperBtn')
+    };
+
+    const TOWER_SPECS = {
+      archer: { cost: 50, range: 115, damage: 14, rate: 22, color: '#f59e0b', icon: '🏹', imgKey: 'archer' },
+      cannon: { cost: 90, range: 125, damage: 32, rate: 60, color: '#ef4444', icon: '💣', imgKey: 'cannon' },
+      ice: { cost: 70, range: 100, damage: 5, rate: 35, color: '#0284c7', icon: '❄', imgKey: 'ice' },
+      mage: { cost: 120, range: 110, damage: 28, rate: 40, color: '#8b5cf6', icon: '🔮', imgKey: 'mage' },
+      sniper: { cost: 150, range: 250, damage: 120, rate: 120, color: '#10b981', icon: '🎯', imgKey: 'sniper' }
+    };
+
+    function initGame() {
+      const level = levelSelect.value;
+      gold = level === 'easy' ? 200 : 120;
+      hp = 20;
+      wave = 1;
+      isWaveActive = false;
+      isGameOver = false;
+      selectedTowerToSell = null;
+      towers = [];
+      enemies = [];
+      projectiles = [];
+      enemiesToSpawn = [];
+      updateUI();
+      updateStatus('เกมเริ่มแล้ว! เลือกวางป้อมแล้วกดปุ่ม "เริ่ม Wave ถัดไป"', 'neutral');
+    }
+
+    function startNextWave() {
+      if (isWaveActive || isGameOver) return;
+      isWaveActive = true;
+      deselectTowerToSell();
+      
+      const count = 6 + wave * 3;
+      enemiesToSpawn = [];
+
+      for (let i = 0; i < count; i++) {
+        let rand = Math.random();
+        if (wave >= 3 && i === count - 1 && rand < 0.8) { 
+          enemiesToSpawn.push('golem');
+        } else if (wave >= 2 && rand < 0.3) {
+          enemiesToSpawn.push('armored');
+        } else if (wave >= 2 && rand < 0.55) {
+          enemiesToSpawn.push('runner');
+        } else {
+          enemiesToSpawn.push('goblin');
+        }
+      }
+      updateStatus(`⚔ Wave ${wave} เริ่มแล้ว! ศัตรูจำนวน ${enemiesToSpawn.length} ตัวกำลังบุกเข้ามา`, 'warning');
+    }
+
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawPath();
+      handleTowers();
+      handleEnemies();
+      handleProjectiles();
+      if (!isGameOver) requestAnimationFrame(gameLoop);
+    }
+
+    function drawPath() {
+      ctx.beginPath();
+      ctx.strokeStyle = '#374151';
+      ctx.lineWidth = 40;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.moveTo(path[0].x, path[0].y);
+      for (let i = 1; i < path.length; i++) ctx.lineTo(path[i].x, path[i].y);
+      ctx.stroke();
+      ctx.fillStyle = '#10b981';
+      ctx.fillRect(660, 140, 40, 70);
+    }
+
+    canvas.addEventListener('click', (e) => {
+      if (isGameOver) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+      const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+      const clickedTower = towers.find(t => Math.hypot(t.x - x, t.y - y) <= 22);
+      if (clickedTower) {
+        selectTowerToSell(clickedTower);
+        return;
+      } else {
+        deselectTowerToSell();
+      }
+
+      const spec = TOWER_SPECS[selectedTowerType];
+      if (gold < spec.cost) {
+        updateStatus(`❌ เหรียญทองไม่พอ! (ต้องการ $${spec.cost})`, 'warning');
+        return;
+      }
+
+      let tooClose = false;
+      for (let i = 0; i < path.length - 1; i++) {
+        if (distToSegment({x, y}, path[i], path[i+1]) < 30) tooClose = true;
+      }
+      towers.forEach(t => { if (Math.hypot(t.x - x, t.y - y) < 35) tooClose = true; });
+
+      if (tooClose) {
+        updateStatus('❌ ไม่สามารถสร้างตรงนี้ได้! (ทับถนนหรือป้อมอื่น)', 'warning');
+        return;
+      }
+
+      gold -= spec.cost;
+      towers.push({ id: Date.now(), x, y, type: selectedTowerType, cooldown: 0, angle: 0, ...spec });
+      updateUI();
+      updateStatus(`✅ สร้างป้อม ${spec.icon} สำเร็จ!`, 'win');
+    });
+
+    function selectTowerToSell(tower) {
+      selectedTowerToSell = tower;
+      const refund = Math.floor(tower.cost * 0.7);
+      sellRefundText.textContent = `$${refund}`;
+      sellTowerBtn.disabled = false;
+      updateStatus(`🎯 เลือกป้อม ${tower.icon} (กด "ขาย" รับเงินคืน $${refund})`, 'neutral');
+    }
+
+    function deselectTowerToSell() {
+      selectedTowerToSell = null;
+      sellRefundText.textContent = '$0';
+      sellTowerBtn.disabled = true;
+    }
+
+    sellTowerBtn.addEventListener('click', () => {
+      if (!selectedTowerToSell) return;
+      const refund = Math.floor(selectedTowerToSell.cost * 0.7);
+      gold += refund;
+      towers = towers.filter(t => t.id !== selectedTowerToSell.id);
+      updateStatus(`🗑️ ขายป้อมเรียบร้อย! ได้รับเงินคืน +$${refund}`, 'win');
+      deselectTowerToSell();
+      updateUI();
+    });
+
+    function handleTowers() {
+      towers.forEach(t => {
+        if (selectedTowerToSell && selectedTowerToSell.id === t.id) {
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(t.x, t.y, t.range, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        const target = enemies.find(e => Math.hypot(e.x - t.x, e.y - t.y) <= t.range);
+        if (target) t.angle = Math.atan2(target.y - t.y, target.x - t.x);
+
+        ctx.save();
+        ctx.translate(t.x, t.y);
+        ctx.rotate(t.angle);
+        ctx.drawImage(images[t.imgKey], -20, -20, 40, 40);
+        ctx.restore();
+
+        t.cooldown--;
+        if (t.cooldown <= 0 && target) {
+          projectiles.push({ x: t.x, y: t.y, target, damage: t.damage, speed: 10, color: t.color, towerType: t.type });
+          t.cooldown = t.rate;
+        }
+      });
+    }
+
+    function handleEnemies() {
+      if (isWaveActive && enemiesToSpawn.length > 0) {
+        enemySpawnTimer++;
+        if (enemySpawnTimer > 40) {
+          const type = enemiesToSpawn.shift();
+          let e = { x: path[0].x, y: path[0].y, pathIdx: 0, type };
+
+          if (type === 'golem') {
+            e.hp = 150 + wave * 50; e.speed = 0.5; e.reward = 25; e.size = 40;
+          } else if (type === 'armored') {
+            e.hp = 50 + wave * 22; e.speed = 0.95; e.reward = 8; e.size = 32;
+          } else if (type === 'runner') {
+            e.hp = 18 + wave * 8; e.speed = 2.0; e.reward = 5; e.size = 32;
+          } else {
+            e.hp = 25 + wave * 12; e.speed = 1.25; e.reward = 6; e.size = 32;
+          }
+
+          e.maxHp = e.hp;
+          e.originalSpeed = e.speed;
+          enemies.push(e);
+          enemySpawnTimer = 0;
+        }
+      }
+
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        const e = enemies[i];
+        const targetPoint = path[e.pathIdx + 1];
+        if (targetPoint) {
+          const angle = Math.atan2(targetPoint.y - e.y, targetPoint.x - e.x);
+          e.x += Math.cos(angle) * e.speed;
+          e.y += Math.sin(angle) * e.speed;
+          if (Math.hypot(targetPoint.x - e.x, targetPoint.y - e.y) < 3) e.pathIdx++;
+        } else {
+          hp -= (e.type === 'golem' ? 5 : 1); 
+          enemies.splice(i, 1);
+          updateUI();
+          if (hp <= 0) {
+            updateStatus('💥 ปราสาทถูกทำลาย! คุณพ่ายแพ้ (Game Over)', 'lose');
+            isGameOver = true;
+          }
+          continue;
+        }
+
+        const halfSize = e.size / 2;
+        ctx.drawImage(images[e.type], e.x - halfSize, e.y - halfSize, e.size, e.size);
+
+        ctx.fillStyle = '#374151';
+        ctx.fillRect(e.x - 14, e.y - halfSize - 8, 28, 4);
+        ctx.fillStyle = e.type === 'golem' ? '#ef4444' : '#10b981';
+        ctx.fillRect(e.x - 14, e.y - halfSize - 8, (e.hp / e.maxHp) * 28, 4);
+      }
+
+      // ระบบเช็คจบ Wave และจัดการออโต้เวฟ
+      if (isWaveActive && enemiesToSpawn.length === 0 && enemies.length === 0) {
+        isWaveActive = false;
+        gold += 40 + wave * 5;
+        wave++;
+        updateUI();
+        
+        if (autoWaveToggle.checked && !isGameOver) {
+          updateStatus(`🎉 ผ่าน Wave! ออโต้เริ่ม Wave ถัดไปใน 1.5 วินาที...`, 'win');
+          setTimeout(() => {
+            if (autoWaveToggle.checked && !isGameOver && !isWaveActive) {
+              startNextWave();
+            }
+          }, 1500); // หน่วงเวลา 1.5 วิ ก่อนปล่อยมอนรอบต่อไป
+        } else {
+          updateStatus(`🎉 ผ่าน Wave เรียบร้อย! ได้รับโบนัสทอง`, 'win');
+        }
+      }
+    }
+
+    function handleProjectiles() {
+      for (let i = projectiles.length - 1; i >= 0; i--) {
+        const p = projectiles[i];
+        if (!enemies.includes(p.target)) {
+          projectiles.splice(i, 1);
+          continue;
+        }
+
+        const angle = Math.atan2(p.target.y - p.y, p.target.x - p.x);
+        p.x += Math.cos(angle) * p.speed;
+        p.y += Math.sin(angle) * p.speed;
+
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.towerType === 'sniper' ? 6 : 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (Math.hypot(p.target.x - p.x, p.target.y - p.y) < 15) {
+          let dmg = p.damage;
+          if (p.target.type === 'armored' && p.towerType === 'archer') dmg *= 0.4;
+          if (p.target.type === 'golem' && p.towerType === 'sniper') dmg *= 1.5; 
+          
+          if (p.towerType === 'ice') {
+            p.target.speed = p.target.type === 'golem' ? p.target.originalSpeed * 0.8 : p.target.originalSpeed * 0.5;
+          }
+
+          p.target.hp -= dmg;
+          if (p.target.hp <= 0) {
+            gold += p.target.reward;
+            enemies.splice(enemies.indexOf(p.target), 1);
+            updateUI();
+          }
+          projectiles.splice(i, 1);
+        }
+      }
+    }
+
+    function distToSegment(p, v, w) {
+      const l2 = (v.x - w.x)**2 + (v.y - w.y)**2;
+      if (l2 === 0) return Math.hypot(p.x - v.x, p.y - v.y);
+      let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+      t = Math.max(0, Math.min(1, t));
+      return Math.hypot(p.x - (v.x + t * (w.x - v.x)), p.y - (v.y + t * (w.y - v.y)));
+    }
+
+    function updateUI() {
+      hpText.textContent = `${hp} / 20`;
+      goldText.textContent = gold;
+      waveText.textContent = wave;
+    }
+
+    function updateStatus(msg, type) {
+      statusBox.textContent = msg;
+      statusBox.className = 'p-2.5 rounded-lg text-center font-semibold text-sm transition-colors border border-gray-600 ';
+      if (type === 'win') statusBox.classList.add('bg-emerald-900/60', 'text-emerald-300');
+      else if (type === 'lose') statusBox.classList.add('bg-red-900/60', 'text-red-300');
+      else if (type === 'warning') statusBox.classList.add('bg-amber-900/60', 'text-amber-300');
+      else statusBox.classList.add('bg-gray-700/50', 'text-amber-300');
+    }
+
+    Object.keys(towerBtns).forEach(key => {
+      towerBtns[key].addEventListener('click', () => {
+        selectedTowerType = key;
+        Object.values(towerBtns).forEach(b => b.classList.replace('border-amber-300', 'border-transparent'));
+        towerBtns[key].classList.replace('border-transparent', 'border-amber-300');
+      });
+    });
+
+    window.addEventListener('keydown', (e) => { if (e.code === 'Space') { e.preventDefault(); startNextWave(); } });
+    startWaveBtn.addEventListener('click', startNextWave);
+    restartBtn.addEventListener('click', () => { initGame(); });
+    levelSelect.addEventListener('change', initGame);
+    document.getElementById('howToPlayBtn').addEventListener('click', () => document.getElementById('howToPlayModal').classList.toggle('hidden'));
+
+    initGame();
+    requestAnimationFrame(gameLoop);
+  </script>
+</body>
+</html>
